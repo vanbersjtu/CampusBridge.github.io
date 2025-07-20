@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusBridge - 你的视野小屋</title>
+    <script src="https://cdn.tailwindcss.com/3.3.3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #121212;
+            color: #E0E0E0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .grid-bg {
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .glassmorphism-dark {
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .academic-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .academic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        
+        .citation {
+            border-left: 4px solid #6C63FF;
+            background: rgba(108, 99, 255, 0.1);
+            padding: 16px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #FFFFFF;
+        }
+        
+        .data-visual {
+            height: 300px;
+            width: 100%;
+            position: relative;
+        }
+        
+        .nav-scrolled {
+            background: rgba(18, 18, 18, 0.95);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .mobile-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            margin: 0.5rem;
+            border-radius: 0.75rem;
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transform-origin: top;
+            transform: scaleY(0);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            z-index: 100;
+        }
+        
+        .mobile-menu.active {
+            transform: scaleY(1);
+            opacity: 1;
+        }
+        
+        .section-title {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #6C63FF, transparent);
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6C63FF, #4A3FDB);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+        }
+        
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+        
+        .gold-button {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #121212;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .gold-button:hover {
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+            transform: translateY(-2px);
+        }
+        
+        .project-icon {
+            font-size: 24px;
+            margin-right: 12px;
+            color: #6C63FF;
+        }
+        /* 高级模态框样式 */
+    #custom-modal {
+        transition: opacity 0.3s, transform 0.3s;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    
+    #custom-modal:not(.hidden) {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    #custom-modal > div:last-child {
+        transform: scale(0.95);
+        transition: transform 0.3s;
+    }
+    
+    #custom-modal:not(.hidden) > div:last-child {
+        transform: scale(1);
+    }
+</style>
+</head>
+<body class="min-h-screen grid-bg">
+    <div id="particles-js"></div>
+
+    <!-- 导航条 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 p-4 transition-all duration-300" id="mainNav">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="text-xl font-bold text-purple-400">
+                <i class="fas fa-university mr-2 text-purple-400"></i>CampusBridge
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#projects" class="text-gray-400 hover:text-white transition-colors">四大项目</a>
+                <a href="#founder" class="text-gray-400 hover:text-white transition-colors">发起人</a>
+                <a href="#contact" class="gold-button px-4 py-2 rounded-full">咨询学长</a>
+            </div>
+            <button class="md:hidden text-purple-400 focus:outline-none" id="mobileMenuButton" aria-label="导航菜单">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- 移动端导航菜单 -->
+            <div class="mobile-menu md:hidden" id="mobileMenu">
+                <a href="#projects" class="text-gray-400 hover:text-white transition-colors flex items-center">
+                    <i class="fas fa-project-diagram mr-3 text-6C63FF"></i>四大项目
+                </a>
+                <a href="#founder" class="text-gray-400 hover:text-white transition-colors flex items-center">
+                    <i class="fas fa-user-tie mr-3 text-6C63FF"></i>发起人
+                </a>
+                <a href="#contact" class="gold-button px-4 py-2 rounded-full mt-2 text-center">咨询学长</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 头部横幅 -->
+    <header class="pt-32 pb-24 px-4 md:px-8 relative">
+        <div class="container mx-auto max-w-6xl text-center fade-in">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6 text-white">
+                Campus<span class="text-6C63FF">Bridge</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-400 mb-12 max-w-3xl mx-auto">你的视野小屋</p>
+            <div class="flex flex-wrap justify-center gap-6">
+                <a href="#projects" class="px-8 py-3 rounded-full bg-gradient-to-r from-6C63FF to-4A3FDB text-white font-medium border border-white hover:shadow-lg hover:shadow-purple-500/30 transition-all">
+                    <i class="fas fa-project-diagram mr-2"></i>探索项目
+                </a>
+                <a href="#founder" class="px-8 py-3 rounded-full border border-white text-white font-medium hover:bg-gray-800 transition-all">
+                    <i class="fas fa-user-tie mr-2"></i>了解发起人
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 四大项目部分 -->
+    <section id="projects" class="py-16 px-4 md:px-8 bg-gray-900/50">
+        <div class="container mx-auto max-w-6xl">
+            <h2 class="text-3xl font-bold mb-12 text-center text-white section-title">视野小屋<span>四大核心项目</span></h2>
+
+            <div class="grid grid-cols-1 gap-8 fade-in">
+                <!-- MindStorm项目 -->
+                <div class="glassmorphism-dark academic-card p-8">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-square-root-alt project-icon"></i>
+                        <h3 class="text-2xl font-semibold text-white">MindStorm数理竞赛与高考提升讲座</h3>
+                    </div>
+                    
+                    <p class="text-gray-400 mb-6">每年寒暑假于滨河、陆港、金湾等学校开展100-200人规模的大型讲座，专注于<strong class="text-6C63FF">竞赛技巧巧解高考题</strong>、<strong class="text-6C63FF">拓展新的思维方法与技巧</strong>、<strong class="text-6C63FF">传递高考最新动态与备考复习策略</strong>等内容。</p>
+                    
+                    <!-- 图片展示 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+                        <img src="https://notes.sjtu.edu.cn/uploads/upload_cc511e7af2613d4b80625cbe1547ee38.png" alt="讲座现场全景照" class="rounded-lg h-48 w-full object-cover">
+                        <img src="https://notes.sjtu.edu.cn/uploads/upload_880186cf09b8ee9b9bc275b59ef22fbc.png" alt="经验交流场景" class="rounded-lg h-48 w-full object-cover">
+                        <img src=" https://notes.sjtu.edu.cn/uploads/upload_4657e5c75413f679fcea804bf63bbc8c.png" alt="学业规划讲座" class="rounded-lg h-48 w-full object-cover">
+                    </div>
+                    
+                    <!-- 参与人数增长曲线图 -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold text-white mb-4">参与人数增长趋势</h4>
+                        <div class="data-visual">
+                            <canvas id="mindstormChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <p class="text-gray-400 mb-6">此外，MindStorm还专注于对接铁一系的优秀毕业学长学姐，为有需要的同学进行1对1或1对多的学业辅导或生涯规划，致力于用"过来人"的成功经验和思维认知帮助大家在高中期间不断提升，不断进步！</p>
+                    
+                    <div class="text-center mt-6">
+                        <button class="gold-button px-6 py-3 rounded-full">立即报名</button>
+                    </div>
+                </div>
+
+                <!-- CampusBridge分享社区 -->
+                <div class="glassmorphism-dark academic-card p-8">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-users project-icon"></i>
+                        <h3 class="text-2xl font-semibold text-white">CampusBridge分享社区</h3>
+                    </div>
+                    
+                    <p class="text-gray-400 mb-6">CampusBridge分享社区由众多学长学姐共同创建，致力于分享关于高中学习和生活的一切经验，提供<strong class="text-6C63FF">实时交流平台</strong>、<strong class="text-6C63FF">丰富学习资源</strong>和<strong class="text-6C63FF">独家备考经验</strong>，由微信群和飞书知识库共同组成。</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-gray-800/50 p-6 rounded-lg transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/20">
+                            <h4 class="text-lg font-semibold text-white mb-2"><i class="fas fa-comments text-6C63FF mr-2"></i>微信群交流</h4>
+                            <p class="text-purple-400 text-sm mb-4">实时互动 · 资料共享 · 社群互助</p>
+                            <ul class="space-y-3 text-gray-300 mb-4">
+                                <li class="flex items-start"><i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i><span><strong>导师答疑</strong>：学长学姐在线解答学科难题</span></li>
+                                <li class="flex items-start"><i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i><span><strong>资料推送</strong>：备考资料/拓展读物/模拟题更新</span></li>
+                                <li class="flex items-start"><i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i><span><strong>专题突破</strong>：分类整理+压轴题提升指导</span></li>
+                                <li class="flex items-start"><i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i><span><strong>共同进步</strong>：营造互助学习氛围</span></li>
+                            </ul>
+                            <p class="text-white font-medium"><i class="fas fa-lightbulb text-yellow-400 mr-1"></i>立即加入，获取专属学习支持！</p>
+                        </div>
+                        <div class="bg-gray-800/50 p-6 rounded-lg transform transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/20">
+                            <h4 class="text-lg font-semibold text-white mb-2"><i class="fas fa-book text-6C63FF mr-2"></i>飞书知识库</h4>
+                            <p class="text-purple-400 text-sm mb-4">独家经验 · 方法指导 · 资源库</p>
+                            <ul class="space-y-3 text-gray-300 mb-4">
+                                <li class="flex items-start"><i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i><span><strong>学霸经验</strong>：top985学长学姐备考策略</span></li>
+                                <li class="flex items-start"><i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i><span><strong>高效方法</strong>：错题整理/笔记系统/时间管理</span></li>
+                                <li class="flex items-start"><i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i><span><strong>资源导航</strong>：学习资料获取渠道汇总</span></li>
+                                <li class="flex items-start"><i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i><span><strong>自律养成</strong>：目标设定与学习氛围营造</span></li>
+                            </ul>
+                            <p class="text-white font-medium"><i class="fas fa-lightbulb text-yellow-400 mr-1"></i>解锁全部，掌握学霸学习方法！</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 学员评价轮播 -->
+                    <div class="citation mb-6">
+                        <p>"通过CampusBridge社区，我获得了许多宝贵的学习方法和资源，对我的高考备考以及大学录取帮助极大！"</p>
+                        <p class="text-right mt-2 text-gray-300">—— 2025级学员 张同学</p>
+                    </div>
+                    <div class="citation mb-6">
+                        <p>"通过CampusBridge社区，我对学习的理解有了进一步的提升，如何学习，怎么样高效的学习，怎么样快速提升自己的成绩，这些问题在这个社区的交流中都一一得到了解答"</p>
+                        <p class="text-right mt-2 text-gray-300">—— 2027级学员 孙同学</p>
+                    </div>
+                    
+                    <div class="text-center mt-6">
+                        <button class="gold-button px-6 py-3 rounded-full">立即加入</button>
+                    </div>
+                </div>
+
+                <!-- SmartChoice项目 -->
+                <div class="glassmorphism-dark academic-card p-8">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-map-marked-alt project-icon"></i>
+                        <h3 class="text-2xl font-semibold text-white">SmartChoice强基报考与高考志愿规划</h3>
+                    </div>
+                    
+                    <p class="text-gray-400 mb-6">我们的团队成员遍布了理工科的各个专业，提供<strong class="text-6C63FF">专业选择指导</strong>、<strong class="text-6C63FF">就业前景分析</strong>和<strong class="text-6C63FF">升学路径规划</strong>。从计算机、人工智能等电子信息专业，再到机械动力、航空航天、电气工程、材料工程等硬核工科，再到数学物理等基础学科，我们对大学的专业有着多元的认知和亲身的经历。</p>
+                    
+                    <!-- 录取数据表格 -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold text-white mb-4">历年服务成果</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-gray-800/50 rounded-lg overflow-hidden">
+                                <thead>
+                                    <tr class="bg-gray-700/50">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">年份</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">服务人数</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">顶尖学府录取</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">强基计划通过率</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-700/50">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">2023</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">56人</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">12人</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">85%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">2024</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">89人</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">23人</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">92%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">2025</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">120人</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">35人</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">94%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800/50 p-6 rounded-lg mb-6">
+                        <h4 class="text-lg font-semibold text-white mb-3"><i class="fas fa-trophy text-6C63FF mr-2"></i>成功案例</h4>
+                        <p class="text-gray-400">2023年到2025年，我们已经帮助多名同学成功规划录取至北京大学，上海交通大学、复旦大学、浙江大学、南京大学、北京航空航天大学、西安交通大学等多个顶尖学府。</p>
+                    </div>
+                    
+                    <div class="text-center mt-6">
+                        <button class="gold-button px-6 py-3 rounded-full">立即咨询</button>
+                    </div>
+                </div>
+
+                <!-- T型人才加速营 -->
+                <div class="glassmorphism-dark academic-card p-8">
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-rocket project-icon"></i>
+                        <h3 class="text-2xl font-semibold text-white">T型人才加速营</h3>
+                    </div>
+                    
+                    <p class="text-gray-400 mb-6">T型人才加速营，致力于在高考后为高三毕业生们以最快速度打破高中对大家思维和眼界的束缚，提供<strong class="text-6C63FF">前沿科技课程</strong>、<strong class="text-6C63FF">实践项目体验</strong>和<strong class="text-6C63FF">职业发展指导</strong>，获得知识、视野和认知的提升。</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-gray-800/50 p-4 rounded-lg">
+                            <h4 class="text-lg font-semibold text-white mb-2"><i class="fas fa-calculator text-6C63FF mr-2"></i>线性代数</h4>
+                            <p class="text-sm text-gray-400">掌握大学数学基础，为理工科学习打下坚实基础</p>
+                        </div>
+                        <div class="bg-gray-800/50 p-4 rounded-lg">
+                            <h4 class="text-lg font-semibold text-white mb-2"><i class="fas fa-code text-6C63FF mr-2"></i>Python编程</h4>
+                            <p class="text-sm text-gray-400">学习现代编程语言，提升问题解决能力</p>
+                        </div>
+                        <div class="bg-gray-800/50 p-4 rounded-lg">
+                            <h4 class="text-lg font-semibold text-white mb-2"><i class="fas fa-robot text-6C63FF mr-2"></i>人工智能</h4>
+                            <p class="text-sm text-gray-400">了解AI前沿技术，拓展未来发展方向</p>
+                        </div>
+                    </div>
+                    
+                    <div class="citation mb-6">
+                        <p>"T型人才加速营让我在进入大学前就掌握了编程基础，大学学习轻松很多！"</p>
+                        <p class="text-right mt-2 text-gray-300">—— 2024届学员 李同学</p>
+                    </div>
+                    
+                    <div class="text-center mt-6">
+                        <button class="gold-button px-6 py-3 rounded-full">立即申请</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 发起人简介部分 -->
+    <section id="founder" class="py-16 px-4 md:px-8">
+        <div class="container mx-auto max-w-6xl">
+            <div class="glassmorphism-dark academic-card p-8 fade-in">
+                <h2 class="text-3xl font-bold mb-8 text-center text-white section-title">项目<span>发起人</span></h2>
+                
+                <!-- 发起人照片 -->
+                <div class="flex flex-col md:flex-row items-center mb-8">
+                    <img src="https://notes.sjtu.edu.cn/uploads/upload_37ba68b05d30063f9fd34888aa31aa87.png" alt="李文博学长" class="rounded-full h-48 w-48 object-cover border-4 border-6C63FF/50 mb-6 md:mb-0 md:mr-8">
+                    <div>
+                        <h3 class="text-2xl font-semibold text-white mb-2">李文博 (sjtu.wenber)</h3>
+                        <p class="text-gray-400 mb-4">铁一中/滨河校友  | 上海交通大学物理系</p>
+                        <div class="flex flex-wrap gap-2">
+                             <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-sm">全省高考56名（2022年灞桥区状元）</span>
+                            <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-sm">获教育部颁发国家奖学金（本科生最高荣誉）</span>
+                            <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-sm">香港中文大学AI博士预录取</span>
+                            <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-sm">上海交大强基计划陕西第一</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-white">个人背景</h3>
+                        <p class="text-gray-400 mb-6">2022年灞桥区高考状元，全省位次56名，上海交通大学物理系本科，已获得香港中文大学人工智能博士预录取。本科期间曾两次获得教育部颁发的国家奖学金（本科生最高荣誉），学业成绩连续三年位居上海交通大学物理系第一。</p>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 mr-4 mt-1 flex-shrink-0">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <span class="text-gray-400">2022年灞桥区高考状元</span>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 mr-4 mt-1 flex-shrink-0">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <span class="text-gray-400">全省位次56名</span>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 mr-4 mt-1 flex-shrink-0">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <span class="text-gray-400">上海交通大学物理系本科</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-white">教育贡献</h3>
+                        <p class="text-gray-400 mb-6">2022年-2025年期间，sjtu.wenber学长受邀主讲物理竞赛、高中学业规划、高三数理思维提升等多个讲座，覆盖铁一滨河、铁一金湾、铁一陆港等多个学校，新颖的思路与开拓的视野使得1000余名学生受益。</p>
+                        
+                        <div class="bg-gray-800/50 p-6 rounded-lg mb-6">
+                            <h4 class="text-lg font-semibold text-white mb-2"><i class="fas fa-star text-purple-400 mr-2"></i>升学指导成就</h4>
+                            <p class="text-gray-400">sjtu.wenber学长亲身参与过高考升学的多个途径，不仅高考分数裸分高于清北线（70名），还是是上海交大强基计划考试陕西省第一名，中国科学院大学综合测评全省前三，帮助多名学弟学妹成功进入北京大学、浙江大学、南京大学、北京航空航天大学等多个顶尖学府。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 联系部分 -->
+    <section id="contact" class="py-16 px-4 md:px-8 bg-gray-900/50">
+        <div class="container mx-auto max-w-6xl text-center">
+            <h2 class="text-3xl font-bold mb-8 text-white">立即加入CampusBridge</h2>
+            <p class="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">获取更多学习资源和升学指导</p>
+            <div class="flex flex-wrap justify-center gap-6">
+                <a href="#" class="px-8 py-3 rounded-full bg-gradient-to-r from-6C63FF to-4A3FDB text-white font-medium border border-white hover:shadow-lg hover:shadow-purple-500/30 transition-all" onclick="showModal('微信咨询', '17792723578')">
+                    <i class="fab fa-weixin mr-2"></i>微信咨询
+                </a>
+                <a href="#" class="px-8 py-3 rounded-full border border-white text-white font-medium hover:bg-gray-800 transition-all" onclick="showModal('邮件联系', '2938890517@qq.com')">
+                    <i class="fas fa-envelope mr-2"></i>邮件联系
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-900 text-gray-500 py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-xl font-bold mb-2 text-white">CampusBridge</h3>
+                    <p>你的视野小屋</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors">
+                        <i class="fab fa-weixin text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors">
+                        <i class="fab fa-qq text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors">
+                        <i class="fas fa-envelope text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-gray-800 text-center text-sm">
+                <p>created by <a href="https://space.coze.cn" class="text-6C63FF hover:underline">coze space</a></p>
+                <p class="mt-1">由 sjtu.wenber 学长设计</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 粒子背景初始化
+        particlesJS("particles-js", {
+            "particles": {
+                "number": {
+                    "value": 80,
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#FFFFFF"
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    }
+                },
+                "opacity": {
+                    "value": 0.5,
+                    "random": false,
+                    "anim": {
+                        "enable": false,
+                        "speed": 1,
+                        "opacity_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "size": {
+                    "value": 3,
+                    "random": true,
+                    "anim": {
+                        "enable": false,
+                        "speed": 40,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#FFFFFF",
+                    "opacity": 0.4,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 3,
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": {
+                        "distance": 140,
+                        "line_linked": {
+                            "opacity": 1
+                        }
+                    },
+                    "bubble": {
+                        "distance": 400,
+                        "size": 40,
+                        "duration": 2,
+                        "opacity": 8,
+                        "speed": 3
+                    },
+                    "repulse": {
+                        "distance": 200,
+                        "duration": 0.4
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    },
+                    "remove": {
+                        "particles_nb": 2
+                    }
+                }
+            },
+            "retina_detect": true
+        });
+
+        // MindStorm参与人数增长曲线图
+        const mindstormCtx = document.getElementById('mindstormChart').getContext('2d');
+        new Chart(mindstormCtx, {
+            type: 'line',
+            data: {
+                labels: ['2022', '2023', '2024', '2025'],
+                datasets: [{
+                    label: '参与人数',
+                    data: [50, 200, 550, 1060],
+                    backgroundColor: 'rgba(108, 99, 255, 0.2)',
+                    borderColor: 'rgba(255, 255, 255, 1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // 滚动动画
+        function checkVisibility() {
+            const elements = document.querySelectorAll('.fade-in');
+            elements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (elementTop < windowHeight - 100) {
+                    element.classList.add('visible');
+                }
+            });
+        }
+        
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const nav = document.getElementById('mainNav');
+            if (window.scrollY > 50) {
+                nav.classList.add('nav-scrolled');
+            } else {
+                nav.classList.remove('nav-scrolled');
+            }
+            
+            checkVisibility();
+        });
+        
+        // 移动端菜单切换
+        document.getElementById('mobileMenuButton').addEventListener('click', function() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('active');
+            
+            const icon = this.querySelector('i');
+            if (menu.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-times');
+            } else {
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-bars');
+            }
+        });
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    
+                    // 关闭移动端菜单
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (mobileMenu.classList.contains('active')) {
+                        mobileMenu.classList.remove('active');
+                        const menuIcon = document.querySelector('#mobileMenuButton i');
+                        menuIcon.classList.remove('fa-times');
+                        menuIcon.classList.add('fa-bars');
+                    }
+                }
+            });
+        });
+
+        // 初始化检查可见性
+        document.addEventListener('DOMContentLoaded', function() {
+            checkVisibility();
+        });
+    </script>
+    <!-- 高级模态框 -->
+    <div id="custom-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="relative mx-auto mt-32 max-w-md rounded-xl bg-gradient-to-br from-gray-600 to-gray-700 p-8 shadow-xl shadow-purple-500/40 border-2 border-white ring-2 ring-white/20 outline outline-white/30 outline-offset-2 transition-all duration-300 text-center transform hover:scale-[1.02] hover:shadow-purple-500/50">
+            <button class="absolute right-4 top-4 text-2xl text-white hover:text-gray-300 transition-colors" onclick="closeModal()">&times;</button>
+            <h3 id="modal-title" class="mb-4 text-2xl font-bold text-white"></h3>
+            <p id="modal-content" class="text-lg text-white"></p>
+            <div class="mt-6 flex justify-end">
+                <button class="rounded-lg bg-purple-600 px-4 py-2 font-medium text-white hover:bg-purple-700 transition-all" onclick="closeModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showModal(title, content) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-content').textContent = content;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+        
+        function closeModal() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
